@@ -1,9 +1,5 @@
 package Gestion;
 
-/**
- *
- * @author JORGE MALAVER
- */
 import Cracion.Nodo;
 import java.util.Random;
 import javax.swing.JOptionPane;

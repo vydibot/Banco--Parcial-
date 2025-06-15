@@ -6,7 +6,7 @@ import javax.swing.*;
 import Cracion.Nodo;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.util.Random;
 
 public class BancoGUI extends JFrame {
     private Adicionar banco;
@@ -14,6 +14,9 @@ public class BancoGUI extends JFrame {
     private JButton btnAgregarCliente;
     private JButton btnProcesarCliente;
     private JPanel panelEstado;
+    private Timer clienteTimer;
+    private Random random = new Random();
+    private JLabel estadoLabel;
     
     public BancoGUI() {
         banco = new Adicionar();
@@ -36,9 +39,11 @@ public class BancoGUI extends JFrame {
         areaClientes.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(areaClientes);
         
-        // Panel de estado actual
+        // Modificar panel de estado
         panelEstado = new JPanel();
         panelEstado.setBorder(BorderFactory.createTitledBorder("Estado Actual"));
+        estadoLabel = new JLabel("Esperando clientes...");
+        panelEstado.add(estadoLabel);
         
         // Agregar componentes
         add(panelBotones, BorderLayout.NORTH);
@@ -48,6 +53,10 @@ public class BancoGUI extends JFrame {
         // Eventos
         btnAgregarCliente.addActionListener(e -> agregarCliente());
         btnProcesarCliente.addActionListener(e -> procesarCliente());
+        
+        // Configurar timer para llegada automática de clientes
+        clienteTimer = new Timer(10000, e -> generarClientesAutomaticos());
+        clienteTimer.start();
         
         actualizarInterfaz();
     }
@@ -59,6 +68,15 @@ public class BancoGUI extends JFrame {
     
     private void procesarCliente() {
         banco.procesarCliente();
+        actualizarInterfaz();
+    }
+    
+    private void generarClientesAutomaticos() {
+        int cantidadClientes = 1 + random.nextInt(5); // Genera entre 1 y 5 clientes
+        for (int i = 0; i < cantidadClientes; i++) {
+            banco.agregarCliente();
+        }
+        estadoLabel.setText("Llegaron " + cantidadClientes + " nuevos clientes");
         actualizarInterfaz();
     }
     
