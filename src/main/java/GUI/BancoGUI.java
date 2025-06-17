@@ -7,6 +7,7 @@ import Cracion.Nodo;
 
 import java.awt.*;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BancoGUI extends JFrame {
     private Adicionar banco;
@@ -14,9 +15,11 @@ public class BancoGUI extends JFrame {
     private JButton btnAgregarCliente;
     private JButton btnProcesarCliente;
     private JPanel panelEstado;
-    private Timer clienteTimer;
     private Random random = new Random();
     private JLabel estadoLabel;
+    private AtomicBoolean running;
+    private Thread clienteThread;
+    private Thread procesamientoThread;
     
     public BancoGUI() {
         banco = new Adicionar();
@@ -54,11 +57,40 @@ public class BancoGUI extends JFrame {
         btnAgregarCliente.addActionListener(e -> agregarCliente());
         btnProcesarCliente.addActionListener(e -> procesarCliente());
         
-        // Configurar timer para llegada automática de clientes
-        clienteTimer = new Timer(10000, e -> generarClientesAutomaticos());
-        clienteTimer.start();
+        running = new AtomicBoolean(true);
+        iniciarHilos();
         
         actualizarInterfaz();
+    }
+    
+    private void iniciarHilos() {
+        clienteThread = new Thread(() -> {
+            while (running.get()) {
+                try {
+                    Thread.sleep(10000); // 10 segundos
+                    SwingUtilities.invokeLater(() -> generarClientesAutomaticos());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }, "ClienteThread");
+
+        procesamientoThread = new Thread(() -> {
+            while (running.get()) {
+                try {
+                    Thread.sleep(5000); // 5 segundos
+                    SwingUtilities.invokeLater(() -> {
+                        banco.procesarCliente();
+                        actualizarInterfaz();
+                    });
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }, "ProcesamientoThread");
+
+        clienteThread.start();
+        procesamientoThread.start();
     }
     
     private void agregarCliente() {
@@ -93,5 +125,13 @@ public class BancoGUI extends JFrame {
         }
         
         areaClientes.setText(cola.toString());
+    }
+    
+    @Override
+    public void dispose() {
+        running.set(false);
+        clienteThread.interrupt();
+        procesamientoThread.interrupt();
+        super.dispose();
     }
 }
